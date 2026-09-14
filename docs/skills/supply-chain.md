@@ -231,7 +231,7 @@ and bumped by Renovate:
 uses: sigstore/cosign-installer@<full SHA> # <released version>
 ```
 
-All in-repo call sites (as of #464):
+In-repo call sites:
 
 - `bootc-build/setup-runner/action.yml`
 - `bootc-build/sign-and-publish/action.yml`
@@ -242,27 +242,19 @@ There is deliberately **no** in-repo composite action for cosign installation.
 
 ### Do not reintroduce a second installer
 
-This repo previously shipped a hardened composite action
-(`.github/actions/install-cosign`: SHA-256 verification of the release asset, cache,
-source-build fallback). It was deleted in #465 because zero builds executed it:
-security hardening (#434) and Renovate bumps kept landing for code no consumer ever
-ran, while every real release gate installed cosign via `sigstore/cosign-installer`
-(#464). A second install mechanism restates the trust policy for the binary that signs
-every published image in multiple places at multiple strength levels — and the
-strongest one ends up decorative.
+A second install mechanism restates the trust policy for the binary that signs
+every published image in multiple places at multiple strength levels — and unexercised
+installers end up decorative.
 
-If a hardened installer is wanted again, reintroduce it **with its first consumer in
+If a hardened installer is needed, reintroduce it **with its first consumer in
 the same PR**: migrate at least one call site above in the same commit. An installer
 with no executing consumer is the anti-pattern this policy exists to prevent.
 
-### Known out-of-repo divergence (tracked on #464)
+### Out-of-repo divergence rule
 
-`projectbluefin/bluefin-lts/.github/actions/install-cosign` is a fork of the deleted
-action — same path and name, different implementation. It contains **no SHA-256
-verification** (zero `sha256` references), so it provides no stronger guarantee than
-the plain `sigstore/cosign-installer` it wraps, while keeping a second cosign-install
-mechanism alive. Its reconciliation (alongside the other external direct uses) is
-tracked on #464; until then, do not copy it into this repo or any other.
+If a consuming repository maintains an unverified wrapper around `sigstore/cosign-installer`
+that provides no stronger guarantees, do not copy or replicate that wrapper back into this repo.
+Keep this repository strictly on direct, upstream-pinned `sigstore/cosign-installer` invocations.
 
 ---
 
